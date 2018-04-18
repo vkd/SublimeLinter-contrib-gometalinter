@@ -23,7 +23,7 @@ class Gometalinter(Linter):
 
     syntax = ('go', 'gosublime-go', 'gotools', 'anacondago-go')
     cmd = 'gometalinter --fast .'
-    regex = r'(?:[^:]+):(?P<line>\d+):(?P<col>\d+)?:(?:(?P<warning>warning)|(?P<error>error)):\s*(?P<message>.*)'
+    regex = r'(?P<filename>[^:]+):(?P<line>\d+):(?P<col>\d+)?:(?:(?P<warning>warning)|(?P<error>error)):\s*(?P<message>.*)'
     error_stream = util.STREAM_BOTH
     default_type = highlight.ERROR
 
@@ -32,6 +32,13 @@ class Gometalinter(Linter):
             return self._live_lint(cmd, code)
         else:
             return self._in_place_lint(cmd)
+
+    def split_match(self, match):
+        """Process each match modifying or discarding it."""
+        match, line, col, error, warning, message, near = super().split_match(match)
+        if match.group("filename") != os.path.basename(self.filename):
+            return None, None, None, None, None, '', None
+        return match, line, col, error, warning, message, near
 
     def _dir_env(self):
         settings = self.get_view_settings()
